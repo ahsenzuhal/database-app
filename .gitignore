@@ -1,0 +1,12 @@
+# NetBeans project files
+/build/
+/dist/
+/nbproject/private/
+/nbproject/Makefile-*.mk
+/nbbuild/
+
+# IDE settings
+.idea/
+*.iml
+*.ipr
+*.iws
