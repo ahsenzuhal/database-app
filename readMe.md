@@ -1,36 +1,193 @@
-# Akıllı Kütüphane Yönetim Sistemi (Spring Boot API)
+# Akıllı Kütüphane Yönetim Sistemi
 
-Bu proje, `proje2025-2026.pdf` şartnamesine uygun olarak geliştirilen, REST API tabanlı bir kütüphane otomasyonudur.
-
-*(Not: Bu depo daha önce bir Java Swing prototipi içeriyordu. Bu commit ile proje, PDF şartnamesine uygun olarak Spring Boot katmanlı mimarisine geçirilmiştir.)*
-
----
+Spring Boot tabanlı REST API kütüphane otomasyon sistemi.
 
 ## Teknolojiler
 
-* **Backend:** Spring Boot (Java)
-* **Veritabanı:** MySQL
-* **Mimari:** Katmanlı Mimari (Controller, Service, Repository)
-* **Güvenlik:** Spring Security (BCrypt Şifreleme)
-* **Veri Erişimi:** Spring Data JPA
+- **Backend:** Spring Boot 3.5.7 (Java 21)
+- **Veritabanı:** MySQL
+- **Mimari:** Katmanlı Mimari (Controller, Service, Repository)
+- **Güvenlik:** Spring Security (BCrypt Şifreleme)
+- **Veri Erişimi:** Spring Data JPA
+- **Build Tool:** Maven
 
----
+## Gereksinimler
 
-## Güncel Durum (10 Kasım 2025)
+- Java 21 veya üzeri
+- Maven 3.6+
+- MySQL 8.0+
+- Git
 
-Projenin backend altyapısı ve veritabanı katmanları büyük ölçüde tamamlanmıştır.
+##  Kurulum
 
-### Tamamlanan Adımlar
-* **Veritabanı Şeması:** PDF'te istenen `Kitaplar`, `Öğrenciler`, `Yazarlar`, `Kategoriler`, `Kullanıcılar` ve `Cezalar` tabloları için MySQL şeması hazırlandı.
-* **Entity (Model) Katmanı:** Tüm veritabanı tabloları için Java (`@Entity`) sınıfları oluşturuldu.
-* **Repository Katmanı:** Tüm Entity sınıfları için Spring Data JPA (`@Repository`) arayüzleri oluşturuldu.
-* **Güvenlik Altyapısı:** Parola yönetimi için `BCryptPasswordEncoder` entegre edildi.
-* **Servis Katmanı (Başlangıç):** `KullaniciService` oluşturuldu.
-* **Veri Başlatma (Data Seed):** Uygulama başladığında veritabanında otomatik olarak şifrelenmiş bir `admin` kullanıcısı oluşturan `CommandLineRunner` eklendi.
+### 1. Projeyi Klonlayın
+```bash
+git clone <repository-url>
+cd AkilliKutuphane
+```
 
-### Sonraki Adımlar
-* Tüm iş mantığı için `Service` katmanının tamamlanması.
-* `Controller` katmanının (REST API uç noktaları) yazılması.
-* JWT (JSON Web Token) ile kimlik doğrulama sisteminin entegre edilmesi.
-* API'leri test etmek için Postman testlerinin yapılması.
-* Frontend (Thymeleaf veya HTML/CSS/JS) arayüzünün geliştirilmesi.
+### 2. Veritabanını Hazırlayın
+MySQL'de `KutuphaneSistemi` adında bir veritabanı oluşturun:
+```sql
+CREATE DATABASE KutuphaneSistemi;
+```
+
+### 3. Veritabanı Ayarlarını Yapılandırın
+`src/main/resources/application.properties` dosyasındaki veritabanı bilgilerini kendi ayarlarınıza göre güncelleyin:
+```properties
+spring.datasource.url=jdbc:mysql://localhost:3306/KutuphaneSistemi
+spring.datasource.username=root
+spring.datasource.password=your_password
+```
+
+### 4. Projeyi Derleyin ve Çalıştırın
+```bash
+# Projeyi derle
+mvn clean install
+
+# Uygulamayı çalıştır
+mvn spring-boot:run
+```
+
+Uygulama `http://localhost:9090` adresinde çalışacaktır.
+
+## 📁 Proje Yapısı
+
+```
+src/main/java/com/kutuphane/AkilliKutuphane/
+├── controller/          # REST API Controller'ları
+│   └── YazarController.java
+├── service/            # İş mantığı katmanı
+│   ├── KullaniciService.java
+│   └── YazarService.java
+├── repository/         # Veritabanı erişim katmanı
+│   ├── CezaRepository.java
+│   ├── KategoriRepository.java
+│   ├── KitapRepository.java
+│   ├── KullaniciRepository.java
+│   ├── OgrenciRepository.java
+│   └── YazarRepository.java
+├── config/            # Yapılandırma sınıfları
+│   └── SecurityConfig.java
+└── [Entity Classes]   # Veritabanı entity'leri
+    ├── Ceza.java
+    ├── Kategori.java
+    ├── Kitap.java
+    ├── Kullanici.java
+    ├── Ogrenci.java
+    └── Yazar.java
+```
+
+## 🔌 API Endpoint'leri
+
+### Base URL
+```
+http://localhost:9090
+```
+
+### Yazarlar API
+
+#### Tüm Yazarları Listele
+```http
+GET /api/yazarlar
+```
+
+**Response:**
+```json
+[
+  {
+    "id": 1,
+    "isim": "Ahmet Ümit",
+    "biyografi": "Türk yazar ve şair..."
+  }
+]
+```
+
+#### Yeni Yazar Ekle
+```http
+POST /api/yazarlar
+Content-Type: application/json
+
+{
+  "isim": "Yazar Adı",
+  "biyografi": "Yazar biyografisi"
+}
+```
+
+#### Yazar Güncelle
+```http
+PUT /api/yazarlar/{id}
+Content-Type: application/json
+
+{
+  "isim": "Güncellenmiş Ad",
+  "biyografi": "Güncellenmiş biyografi"
+}
+```
+
+#### Yazar Sil
+```http
+DELETE /api/yazarlar/{id}
+```
+
+##  Güvenlik
+
+- Uygulama başladığında otomatik olarak bir admin kullanıcısı oluşturulur:
+  - **Kullanıcı Adı:** `admin`
+  - **Şifre:** `admin123`
+  - **Rol:** `ADMIN`
+
+- Şifreler BCrypt ile şifrelenerek veritabanında saklanır.
+
+- Şu anda `/api/**` endpoint'leri herkese açıktır (test amaçlı).
+
+## 📊 Veritabanı Şeması
+
+Proje aşağıdaki tabloları içerir:
+- `kullanicilar` - Sistem kullanıcıları
+- `yazarlar` - Kitap yazarları
+- `kitaplar` - Kütüphane kitapları
+- `ogrenciler` - Öğrenci bilgileri
+- `kategoriler` - Kitap kategorileri
+- `cezalar` - Öğrenci cezaları
+
+Tablolar JPA tarafından otomatik olarak oluşturulur/güncellenir (`spring.jpa.hibernate.ddl-auto=update`).
+
+##  Test Etme
+
+### Postman ile Test
+1. Postman'i açın
+2. Yeni bir request oluşturun
+3. Method olarak `GET`, `POST`, `PUT` veya `DELETE` seçin
+4. URL olarak `http://localhost:9090/api/yazarlar` girin
+5. POST ve PUT için Body sekmesinde JSON formatında veri gönderin
+
+### cURL ile Test
+```bash
+# Tüm yazarları listele
+curl http://localhost:9090/api/yazarlar
+
+# Yeni yazar ekle
+curl -X POST http://localhost:9090/api/yazarlar \
+  -H "Content-Type: application/json" \
+  -d '{"isim":"Test Yazar","biyografi":"Test biyografi"}'
+```
+
+##  Geliştirme Notları
+
+- Proje Spring Boot 3.5.7 ve Java 21 kullanmaktadır
+- Veritabanı bağlantı ayarları `application.properties` dosyasındadır
+- SQL sorguları konsolda gösterilir (`spring.jpa.show-sql=true`)
+- Tablolar otomatik olarak oluşturulur/güncellenir
+
+##  Sonraki Adımlar
+
+- [ ] Diğer entity'ler için Controller'ların oluşturulması
+- [ ] JWT (JSON Web Token) kimlik doğrulama entegrasyonu
+- [ ] API dokümantasyonu (Swagger/OpenAPI)
+- [ ] Unit testlerin yazılması
+- [ ] Frontend arayüzünün geliştirilmesi
+
+##  Geliştirici
+
+Proje geliştirme aşamasındadır.
