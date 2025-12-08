@@ -2,15 +2,29 @@ package com.kutuphane.AkilliKutuphane.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.web.SecurityFilterChain;
 
-@Configuration // Bu sınıfın bir yapılandırma sınıfı olduğunu belirtir
+@Configuration
 public class SecurityConfig {
 
-    @Bean // Bu metodu bir "Spring Bean" (nesne) olarak tanımlar
-    public PasswordEncoder passwordEncoder() {
-        // Sektör standardı olan BCrypt şifreleme algoritmasını kullanıyoruz
-        return new BCryptPasswordEncoder();
+    // Şifreleyici Bean'i (KullaniciService için hala lazım)
+    @Bean
+    public org.springframework.security.crypto.password.PasswordEncoder passwordEncoder() {
+        return new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder();
+    }
+
+    // Güvenlik Zinciri (Tüm kapıları açıyoruz)
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+            .csrf(csrf -> csrf.disable()) // Güvenlik tokenini kapat
+            .authorizeHttpRequests(auth -> auth
+                .anyRequest().permitAll() // DİKKAT: Herkese, her yere erişim izni ver!
+            )
+            .formLogin(login -> login.disable()) // Giriş ekranını kesinlikle kapat
+            .httpBasic(basic -> basic.disable()); // Basic auth penceresini kapat
+
+        return http.build();
     }
 }
