@@ -1,5 +1,6 @@
 package com.kutuphane.AkilliKutuphane;
 
+import com.kutuphane.AkilliKutuphane.Kullanici;
 import com.kutuphane.AkilliKutuphane.service.KullaniciService;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
