@@ -8,8 +8,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
-@RestController // Bu sınıfın bir REST API olduğunu belirtir
-@RequestMapping("/api/yazarlar") // Bu sınıftaki tüm adresler "/api/yazarlar" ile başlar
+@RestController
+@RequestMapping("/api/yazarlar")
 public class YazarController {
 
     private final YazarService yazarService;
@@ -34,7 +34,7 @@ public class YazarController {
 
     // PUT: Yazar güncelle
     @PutMapping("/{id}")
-    public ResponseEntity<Yazar> yazarGuncelle(@PathVariable Long id, @RequestBody Yazar yazarBilgileri) {
+    public ResponseEntity<Yazar> yazarGuncelle(@PathVariable Integer id, @RequestBody Yazar yazarBilgileri) {
         Yazar mevcutYazar = yazarService.yazarGetir(id);
         if (mevcutYazar != null) {
             mevcutYazar.setIsim(yazarBilgileri.getIsim());
@@ -47,8 +47,9 @@ public class YazarController {
 
     // DELETE: Yazar sil
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> yazarSil(@PathVariable Long id) {
+    public ResponseEntity<Void> yazarSil(@PathVariable Integer id) {
         yazarService.yazarSil(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }
+
