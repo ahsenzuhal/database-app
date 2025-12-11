@@ -9,9 +9,7 @@ import org.springframework.stereotype.Service;
 @Service // Bu sınıfın bir "Service" bileşeni olduğunu belirtir
 public class KullaniciService {
 
-    // Gerekli Repository ve Şifreleyiciyi "enjekte ediyoruz" (Autowired)
-    // public final KullaniciRepository kullaniciRepository; // ESKİ
-    public final KullaniciRepository kullaniciRepository; // YENİ (veya private bırakıp service'e yeni metot ekle)
+    private final KullaniciRepository kullaniciRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Autowired
@@ -39,5 +37,18 @@ public class KullaniciService {
         return kullaniciRepository.save(kullanici);
     }
     
-    // (Login, rol kontrolü vb. metotları daha sonra buraya ekleyeceğiz)
+    public boolean kullaniciVarMi(String kullaniciAdi) {
+        return kullaniciRepository.findByKullaniciAdi(kullaniciAdi).isPresent();
+    }
+
+    public Kullanici kullaniciBul(String kullaniciAdi) {
+        return kullaniciRepository.findByKullaniciAdi(kullaniciAdi).orElse(null);
+    }
+
+    public void adminYoksaOlustur(String kullaniciAdi, String sifre, String rol) {
+        if (!kullaniciVarMi(kullaniciAdi)) {
+            Kullanici yeni = new Kullanici(kullaniciAdi, sifre, rol);
+            kullaniciKaydet(yeni);
+        }
+    }
 }

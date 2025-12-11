@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ceza & Raporlar - Akıllı Kütüphane</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #2563eb;
+            --success: #10b981;
+            --danger: #ef4444;
+            --bg-light: #f8fafc;
+            --bg-white: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border: #e2e8f0;
+            --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            background-color: var(--bg-light);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+        }
+
+        .navbar-custom {
+            background-color: var(--bg-white);
+            border-bottom: 1px solid var(--border);
+            box-shadow: var(--shadow);
+        }
+
+        .penalty-card {
+            background-color: var(--bg-white);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--danger);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.2s;
+            margin-bottom: 1rem;
+        }
+
+        .penalty-card:hover {
+            transform: translateX(3px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .stat-card {
+            background-color: var(--bg-white);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .btn-success {
+            background-color: var(--success);
+            border-color: var(--success);
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-custom sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="/dashboard.html" style="font-weight: 600;">
+                <i class="bi bi-arrow-left-circle me-2"></i>Ana Sayfa
+            </a>
+            <span class="text-secondary">Ceza & Raporlar</span>
+        </div>
+    </nav>
+
+    <div class="container py-5">
+        <div class="mb-5">
+            <h2 class="fw-bold mb-4">Ceza Yönetimi</h2>
+            
+            <div class="row g-4 mb-4">
+                <div class="col-md-4">
+                    <div class="stat-card">
+                        <i class="bi bi-exclamation-triangle-fill text-danger" style="font-size: 2rem;"></i>
+                        <div class="stat-value mt-2" id="toplamCeza">0</div>
+                        <div class="text-secondary">Toplam Ceza</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-card">
+                        <i class="bi bi-x-circle-fill text-danger" style="font-size: 2rem;"></i>
+                        <div class="stat-value mt-2" id="odenmeyenCeza">0</div>
+                        <div class="text-secondary">Ödenmeyen</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-card">
+                        <i class="bi bi-check-circle-fill text-success" style="font-size: 2rem;"></i>
+                        <div class="stat-value mt-2" id="odenenCeza">0</div>
+                        <div class="text-secondary">Ödenen</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="ceza-listesi">
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" role="status"></div>
+                <p class="mt-3 text-secondary">Veriler yükleniyor...</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="global.js"></script>
+    <script>
+        let isAdmin = false;
+
+        document.addEventListener("DOMContentLoaded", () => {
+            if (typeof checkAuth === 'undefined' || !checkAuth()) {
+                console.error("checkAuth fonksiyonu bulunamadı veya yetkilendirme başarısız");
+                return;
+            }
+            
+            const role = localStorage.getItem("role");
+            isAdmin = role === "ADMIN" || role === "ROLE_ADMIN";
+            
+            cezalariGetir();
+        });
+
+        async function cezalariGetir() {
+            try {
+                const cezalar = await apiCall("/api/cezalar");
+                if (!cezalar || !Array.isArray(cezalar)) {
+                    throw new Error("Geçersiz veri formatı");
+                }
+                
+                const toplamCeza = cezalar.length;
+                const odenmeyen = cezalar.filter(c => 
+                    c.odemeDurumu === "Ödenmedi" || c.odemeDurumu === "Odenmedi"
+                ).length;
+                const odenen = cezalar.filter(c => 
+                    c.odemeDurumu === "Ödendi" || c.odemeDurumu === "Odeniyor"
+                ).length;
+
+                document.getElementById("toplamCeza").textContent = toplamCeza;
+                document.getElementById("odenmeyenCeza").textContent = odenmeyen;
+                document.getElementById("odenenCeza").textContent = odenen;
+
+                const container = document.getElementById("ceza-listesi");
+
+                if (cezalar.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center py-5">
+                            <i class="bi bi-inbox text-secondary" style="font-size: 4rem;"></i>
+                            <p class="mt-3 text-secondary">Kayıtlı ceza bulunmuyor.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = "";
+                cezalar.forEach(ceza => {
+                    const ogrenciAdi = ceza.ogrenci ? ceza.ogrenci.isim : "Bilinmiyor";
+                    const kitapAdi = ceza.kitap ? ceza.kitap.kitapAdi : "Bilinmiyor";
+                    const odemeDurumu = ceza.odemeDurumu || "Ödenmedi";
+                    const isPaid = odemeDurumu === "Ödendi" || odemeDurumu === "Odeniyor";
+                    
+                    const html = `
+                    <div class="penalty-card">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <h5 class="mb-2">
+                                    <i class="bi bi-exclamation-triangle-fill me-2 text-danger"></i>
+                                    ${formatCurrency(ceza.cezaMiktari || 0)}
+                                </h5>
+                                <div class="mb-2">
+                                    <small class="text-secondary">
+                                        <i class="bi bi-person me-1"></i>Öğrenci: ${ogrenciAdi}
+                                    </small>
+                                </div>
+                                <div class="mb-2">
+                                    <small class="text-secondary">
+                                        <i class="bi bi-book me-1"></i>Kitap: ${kitapAdi}
+                                    </small>
+                                </div>
+                                <div>
+                                    <span class="badge ${isPaid ? 'bg-success' : 'bg-danger'}">
+                                        ${odemeDurumu}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="col-md-4 text-end">
+                                ${isAdmin && !isPaid ? `
+                                    <button onclick="odemeGuncelle(${ceza.id}, 'Ödendi')" class="btn btn-success btn-sm">
+                                        <i class="bi bi-check-circle me-1"></i>Ödendi Olarak İşaretle
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>`;
+                    container.innerHTML += html;
+                });
+            } catch (err) {
+                console.error(err);
+                document.getElementById("ceza-listesi").innerHTML = 
+                    `<div class="text-danger text-center py-5">Veriler yüklenemedi.</div>`;
+            }
+        }
+
+        async function odemeGuncelle(id, durum) {
+            if (!confirm("Ödeme durumunu güncellemek istediğinize emin misiniz?")) return;
+
+            try {
+                await apiCall(`/api/cezalar/${id}/odeme?durum=${durum}`, {
+                    method: "PATCH"
+                });
+                showMessage("Ödeme durumu güncellendi", "success");
+                cezalariGetir();
+            } catch (err) {
+                const errorMsg = err.message || "Bir hata oluştu";
+                showMessage("Hata: " + errorMsg, "error");
+            }
+        }
+    </script>
+</body>
+</html>

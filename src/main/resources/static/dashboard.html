@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ana Menü - Akıllı Kütüphane</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --bg-light: #f8fafc;
+            --bg-white: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border: #e2e8f0;
+            --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            background-color: var(--bg-light);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+        }
+
+        .navbar-custom {
+            background-color: var(--bg-white);
+            border-bottom: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            padding: 1rem 0;
+        }
+
+        .menu-card {
+            background-color: var(--bg-white);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem 1.5rem;
+            text-align: center;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .menu-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--primary);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .menu-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--primary-dark));
+        }
+
+        .icon-circle {
+            width: 64px;
+            height: 64px;
+            background-color: rgba(37, 99, 235, 0.1);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+            font-size: 1.75rem;
+            color: var(--primary);
+        }
+
+        .menu-title {
+            font-weight: 600;
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .menu-desc {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-custom sticky-top">
+        <div class="container">
+            <span class="navbar-brand fw-bold fs-5">
+                <i class="bi bi-book me-2"></i>Akıllı Kütüphane
+            </span>
+            <div class="d-flex align-items-center">
+                <span class="text-secondary me-3 small" id="welcome-msg">Hoşgeldiniz</span>
+                <button onclick="logout()" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-box-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-5">
+        <div class="text-center mb-5">
+            <h1 class="fw-bold mb-2">Yönetim Paneli</h1>
+            <p class="text-secondary">Sisteme hoş geldiniz</p>
+        </div>
+
+        <div id="menu-container" class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        </div>
+    </div>
+
+    <script src="global.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            if (typeof checkAuth === 'undefined' || !checkAuth()) {
+                console.error("checkAuth fonksiyonu bulunamadı veya yetkilendirme başarısız");
+                return;
+            }
+            
+            const token = localStorage.getItem("token");
+            const role = localStorage.getItem("role");
+            const username = localStorage.getItem("username");
+
+            if (!token) {
+                window.location.href = "/login.html";
+                return;
+            }
+
+            document.getElementById("welcome-msg").innerText = `Merhaba, ${username || 'Kullanıcı'}`;
+            renderMenu(role);
+        });
+
+        function renderMenu(role) {
+            const container = document.getElementById("menu-container");
+            container.innerHTML = "";
+
+            let menuItems = [];
+
+            if (role === "ADMIN" || role === "ROLE_ADMIN") {
+                menuItems = [
+                    { 
+                        title: "Kitap Yönetimi", 
+                        desc: "Kitap ekleme, silme ve düzenleme işlemleri.", 
+                        icon: "bi-book-half", 
+                        link: "/books.html" 
+                    },
+                    { 
+                        title: "Üye İşlemleri", 
+                        desc: "Öğrenci kayıtları ve kullanıcı yönetimi.", 
+                        icon: "bi-people-fill", 
+                        link: "/students.html" 
+                    },
+                    { 
+                        title: "Yazar Yönetimi", 
+                        desc: "Yazar ekleme, düzenleme ve silme.", 
+                        icon: "bi-pen-fill", 
+                        link: "/authors.html" 
+                    },
+                    { 
+                        title: "Kategori Yönetimi", 
+                        desc: "Kitap kategorilerini yönetin.", 
+                        icon: "bi-tags-fill", 
+                        link: "/categories.html" 
+                    },
+                    { 
+                        title: "Ödünç Verme", 
+                        desc: "Yeni kitap ödünç verme işlemi.", 
+                        icon: "bi-book-plus", 
+                        link: "/issue-book.html" 
+                    },
+                    { 
+                        title: "Ödünç Takibi", 
+                        desc: "Kimde hangi kitap var? İade işlemleri.", 
+                        icon: "bi-journal-check", 
+                        link: "/borrows.html" 
+                    },
+                    { 
+                        title: "Ceza & Raporlar", 
+                        desc: "Gecikmiş kitaplar ve finansal durum.", 
+                        icon: "bi-pie-chart-fill", 
+                        link: "/penalties.html" 
+                    }
+                ];
+            } else {
+                menuItems = [
+                    { 
+                        title: "Kütüphane Arşivi", 
+                        desc: "Tüm kitapları incele ve ara.", 
+                        icon: "bi-search", 
+                        link: "/books.html" 
+                    },
+                    { 
+                        title: "Kitaplarım", 
+                        desc: "Şu an ödünç aldığın kitapları gör.", 
+                        icon: "bi-backpack2", 
+                        link: "/my-books.html" 
+                    }
+                ];
+            }
+
+            menuItems.forEach(item => {
+                const html = `
+                    <div class="col">
+                        <div class="menu-card" onclick="window.location.href='${item.link}'">
+                            <div class="icon-circle">
+                                <i class="bi ${item.icon}"></i>
+                            </div>
+                            <h3 class="menu-title">${item.title}</h3>
+                            <p class="menu-desc">${item.desc}</p>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += html;
+            });
+        }
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = "/login.html";
+        }
+    </script>
+</body>
+</html>

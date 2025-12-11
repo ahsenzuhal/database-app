@@ -1,49 +1,38 @@
 package com.kutuphane.AkilliKutuphane;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Entity
 @Table(name = "kategoriler")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Kategori {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "kategori_id")
-    private Integer id;
+    private Long id;
 
-    @Column(name = "isim", nullable = false, unique = true) // UNIQUE kısıtlaması
-    private String isim;
+    // DİKKAT: Frontend burayı 'kategoriAdi' olarak bekliyor.
+    // Eğer burada 'ad' veya 'isim' yazıyorsa hata alırsın.
+    @Column(name = "kategori_adi", nullable = false)
+    private String kategoriAdi;
 
-    // --- Constructor'lar ---
-    public Kategori() {
-    }
-
-    public Kategori(String isim) {
-        this.isim = isim;
-    }
-
-    // --- Getter ve Setter Metotları ---
-    public Integer getId() {
+    // --- GETTER VE SETTER METOTLARI ---
+    
+    public Long getId() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
-    public String getIsim() {
-        return isim;
+    public String getKategoriAdi() {
+        return kategoriAdi;
     }
 
-    public void setIsim(String isim) {
-        this.isim = isim;
-    }
-
-    @Override
-    public String toString() {
-        return "Kategori{" +
-               "id=" + id +
-               ", isim='" + isim + '\'' +
-               '}';
+    public void setKategoriAdi(String kategoriAdi) {
+        this.kategoriAdi = kategoriAdi;
     }
 }

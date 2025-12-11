@@ -1,11 +1,13 @@
 package com.kutuphane.AkilliKutuphane;
 
 import com.kutuphane.AkilliKutuphane.Kullanici;
+import com.kutuphane.AkilliKutuphane.repository.KullaniciRepository;
 import com.kutuphane.AkilliKutuphane.service.KullaniciService;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @SpringBootApplication
 public class AkilliKutuphaneApplication {
@@ -14,32 +16,26 @@ public class AkilliKutuphaneApplication {
         SpringApplication.run(AkilliKutuphaneApplication.class, args);
     }
 
-    // === YENİ EKLENEN KISIM BAŞLANGIÇ ===
-    /**
-     * Uygulama ilk başladığında çalışacak kod bloğu.
-     * Veritabanında bir admin kullanıcısı yoksa, oluşturur.
-     */
-    @Bean
-    public CommandLineRunner initialAdminUser(KullaniciService kullaniciService) {
-        return args -> {
-            // Admin kullanıcısını veritabanında ara
-            var adminUser = kullaniciService.kullaniciRepository.findByKullaniciAdi("admin");
+
+   @Bean
+    public CommandLineRunner baslangicAyari(KullaniciRepository kullaniciRepository, PasswordEncoder passwordEncoder) {
+    return args -> {
+        // Admin kullanıcısını bul
+        Kullanici admin = kullaniciRepository.findByKullaniciAdi("admin").orElse(null);
+
+        if (admin != null) {
+            // Şifreyi güvenlik standardına göre hash'le ve güncelle
+            String hamSifre = "admin123";
+            String hashliSifre = passwordEncoder.encode(hamSifre);
             
-            // Eğer "admin" adında bir kullanıcı YÖKSA, oluştur
-            if (adminUser.isEmpty()) {
-                System.out.println("Admin kullanıcısı bulunamadı, oluşturuluyor...");
-                Kullanici admin = new Kullanici();
-                admin.setKullaniciAdi("admin");
-                admin.setSifre("admin123"); // Şifreyi düz metin olarak veriyoruz
-                admin.setRol("ADMIN");
-                
-                // Servis, bu şifreyi otomatik şifreleyip kaydedecek
-                kullaniciService.kullaniciKaydet(admin); 
-                System.out.println("Admin kullanıcısı başarıyla oluşturuldu.");
-            } else {
-                System.out.println("Admin kullanıcısı zaten mevcut.");
-            }
-        };
+            admin.setSifre(hashliSifre);
+            kullaniciRepository.save(admin);
+            
+            System.out.println("-- VERİTABANI SIFIRLANDI VE ŞİFRE GÜNCELLENDİ.");
+            System.out.println("-- KULLANICI ADI: admin");
+            System.out.println("-- ŞİFRE: admin123");
+        }
+    };
     }
-    // === YENİ EKLENEN KISIM BİTİŞ ===
+
 }

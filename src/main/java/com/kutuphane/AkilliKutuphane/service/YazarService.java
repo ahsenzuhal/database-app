@@ -28,12 +28,15 @@ public class YazarService {
     }
 
     // ID'ye göre yazar getir (READ)
-    public Yazar yazarGetir(Integer id) {
+    public Yazar yazarGetir(Long id) {
         return yazarRepository.findById(id).orElse(null);
     }
 
     // Yazar sil (DELETE)
-    public void yazarSil(Integer id) {
+    public void yazarSil(Long id) {
+        if (!yazarRepository.existsById(id)) {
+            throw new RuntimeException("Yazar bulunamadı");
+        }
         yazarRepository.deleteById(id);
     }
 }

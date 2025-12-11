@@ -15,6 +15,9 @@ public class Ogrenci {
     @Column(name = "isim", nullable = false) // Boş olamaz (NOT NULL)
     private String isim;
 
+    @Column(name = "email", nullable = false, unique = true)
+    private String email;
+
     @Column(name = "bolum")
     private String bolum;
 
@@ -25,8 +28,9 @@ public class Ogrenci {
     public Ogrenci() {
     }
 
-    public Ogrenci(String isim, String bolum, String sinif) {
+    public Ogrenci(String isim, String email, String bolum, String sinif) {
         this.isim = isim;
+        this.email = email;
         this.bolum = bolum;
         this.sinif = sinif;
     }
@@ -52,6 +56,14 @@ public class Ogrenci {
         return bolum;
     }
 
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
     public void setBolum(String bolum) {
         this.bolum = bolum;
     }
@@ -69,6 +81,7 @@ public class Ogrenci {
         return "Ogrenci{" +
                "id=" + id +
                ", isim='" + isim + '\'' +
+               ", email='" + email + '\'' +
                ", bolum='" + bolum + '\'' +
                ", sinif='" + sinif + '\'' +
                '}';

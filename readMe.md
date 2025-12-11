@@ -1,46 +1,100 @@
 # Akıllı Kütüphane Yönetim Sistemi
 
-Spring Boot tabanlı REST API kütüphane otomasyon sistemi.
+Spring Boot backend ve Vanilla JavaScript frontend ile geliştirilmiştir.
 
-## Teknolojiler
+## İçindekiler
 
-- **Backend:** Spring Boot 3.5.7 (Java 21)
-- **Veritabanı:** MySQL
-- **Mimari:** Katmanlı Mimari (Controller, Service, Repository)
-- **Güvenlik:** Spring Security (BCrypt Şifreleme)
-- **Veri Erişimi:** Spring Data JPA
+- [Özellikler](#özellikler)
+- [Teknolojiler](#teknolojiler)
+- [Kurulum](#kurulum)
+- [Proje Yapısı](#proje-yapısı)
+- [API Dokümantasyonu](#api-dokümantasyonu)
+- [Frontend Sayfaları](#frontend-sayfaları)
+- [Güvenlik](#güvenlik)
+- [Veritabanı Şeması](#veritabanı-şeması)
+- [Kullanım Kılavuzu](#kullanım-kılavuzu)
+
+##  Özellikler
+
+### Backend Özellikleri
+- ✅ JWT tabanlı kimlik doğrulama ve yetkilendirme
+- ✅ Rol tabanlı erişim kontrolü (ADMIN/USER)
+- ✅ Ödünç alma/iade işlem takibi (OduncIslem Entity)
+- ✅ Otomatik ceza hesaplama (gecikme başına günlük 10 TL)
+- ✅ E-posta bildirim sistemi (gecikme uyarıları)
+- ✅ Global Exception Handling
+- ✅ RESTful API tasarımı
+- ✅ DTO Pattern kullanımı
+- ✅ Service Layer mimarisi
+
+### Frontend Özellikleri
+- ✅ Responsive tasarım (Mobil uyumlu)
+- ✅ Arama ve filtreleme özellikleri
+- ✅ Gerçek zamanlı veri güncellemeleri
+- ✅ Kullanıcı dostu arayüz
+
+##  Teknolojiler
+
+### Backend
+- **Framework:** Spring Boot 3.5.7
+- **Java Version:** Java 21
+- **Veritabanı:** MySQL 8.0+
+- **Güvenlik:** Spring Security + JWT
+- **ORM:** Spring Data JPA / Hibernate
 - **Build Tool:** Maven
+- **Mail:** JavaMailSender
 
-## Gereksinimler
+### Frontend
+- **HTML5** - Yapısal markup
+- **CSS3** - Modern styling (Dark Academia Theme)
+- **Bootstrap 5** - Responsive framework
+- **Vanilla JavaScript** - İstemci tarafı mantık
+- **Fetch API** - HTTP istekleri
+- **Bootstrap Icons** - İkon seti
 
+##  Kurulum
+
+### Gereksinimler
 - Java 21 veya üzeri
 - Maven 3.6+
 - MySQL 8.0+
 - Git
 
-##  Kurulum
-
-### 1. Projeyi Klonlayın
+### Adım 1: Projeyi Klonlayın
 ```bash
 git clone <repository-url>
-cd AkilliKutuphane
+cd version3
 ```
 
-### 2. Veritabanını Hazırlayın
-MySQL'de `KutuphaneSistemi` adında bir veritabanı oluşturun:
+### Adım 2: Veritabanını Oluşturun
+MySQL'de veritabanı oluşturun:
 ```sql
 CREATE DATABASE KutuphaneSistemi;
 ```
 
-### 3. Veritabanı Ayarlarını Yapılandırın
-`src/main/resources/application.properties` dosyasındaki veritabanı bilgilerini kendi ayarlarınıza göre güncelleyin:
+### Adım 3: Yapılandırma
+`src/main/resources/application.properties` dosyasını düzenleyin:
+
 ```properties
+# Veritabanı Ayarları
 spring.datasource.url=jdbc:mysql://localhost:3306/KutuphaneSistemi
-spring.datasource.username=root
+spring.datasource.username=kutuphane_user
 spring.datasource.password=your_password
+
+# JWT Ayarları
+security.jwt.secret=SuPerGucluUzunBirTokenAnahtari2025!@#ABCxyz123
+security.jwt.expiration=3600000
+
+# Mail Ayarları (Opsiyonel)
+spring.mail.host=smtp.hotmail.com
+spring.mail.port=587
+spring.mail.username=your_email@hotmail.com
+spring.mail.password=your_password
+spring.mail.properties.mail.smtp.auth=true
+spring.mail.properties.mail.smtp.starttls.enable=true
 ```
 
-### 4. Projeyi Derleyin ve Çalıştırın
+### Adım 4: Projeyi Derleyin ve Çalıştırın
 ```bash
 # Projeyi derle
 mvn clean install
@@ -51,143 +105,106 @@ mvn spring-boot:run
 
 Uygulama `http://localhost:9090` adresinde çalışacaktır.
 
-## 📁 Proje Yapısı
+##  Proje Yapısı
 
 ```
 src/main/java/com/kutuphane/AkilliKutuphane/
-├── controller/          # REST API Controller'ları
-│   └── YazarController.java
-├── service/            # İş mantığı katmanı
+├── controller/              # REST API Controller'ları
+│   ├── AuthController.java
+│   ├── KitapController.java
+│   ├── OgrenciController.java
+│   ├── YazarController.java
+│   ├── KategoriController.java
+│   ├── CezaController.java
+│   └── OduncIslemController.java
+├── service/                 # İş mantığı katmanı
 │   ├── KullaniciService.java
-│   └── YazarService.java
-├── repository/         # Veritabanı erişim katmanı
-│   ├── CezaRepository.java
-│   ├── KategoriRepository.java
-│   ├── KitapRepository.java
+│   ├── KitapService.java
+│   ├── OgrenciService.java
+│   ├── YazarService.java
+│   ├── KategoriService.java
+│   ├── CezaService.java
+│   ├── OduncIslemService.java
+│   └── EmailService.java
+├── repository/             # Veritabanı erişim katmanı
 │   ├── KullaniciRepository.java
+│   ├── KitapRepository.java
 │   ├── OgrenciRepository.java
-│   └── YazarRepository.java
-├── config/            # Yapılandırma sınıfları
-│   └── SecurityConfig.java
-└── [Entity Classes]   # Veritabanı entity'leri
-    ├── Ceza.java
-    ├── Kategori.java
-    ├── Kitap.java
+│   ├── YazarRepository.java
+│   ├── KategoriRepository.java
+│   ├── CezaRepository.java
+│   └── OduncIslemRepository.java
+├── dto/                    # Data Transfer Objects
+│   ├── AuthRequest.java
+│   ├── AuthResponse.java
+│   ├── RegisterRequest.java
+│   ├── KitapRequest.java
+│   ├── BorrowRequest.java
+│   └── OduncIslemResponseDTO.java
+├── config/                 # Yapılandırma sınıfları
+│   ├── SecurityConfig.java
+│   ├── JwtUtil.java
+│   ├── JwtAuthenticationFilter.java
+│   ├── JwtAuthenticationEntryPoint.java
+│   └── CustomUserDetailsService.java
+├── exception/              # Exception Handler
+│   └── GlobalExceptionHandler.java
+└── [Entity Classes]        # Veritabanı entity'leri
     ├── Kullanici.java
+    ├── Kitap.java
     ├── Ogrenci.java
-    └── Yazar.java
+    ├── Yazar.java
+    ├── Kategori.java
+    ├── Ceza.java
+    └── OduncIslem.java
+
+src/main/resources/
+├── static/                 # Frontend dosyaları
+│   ├── login.html
+│   ├── dashboard.html
+│   ├── books.html
+│   ├── students.html
+│   ├── authors.html
+│   ├── categories.html
+│   ├── issue-book.html
+│   ├── my-books.html
+│   ├── borrows.html
+│   ├── penalties.html
+│   └── global.js
+└── application.properties  # Uygulama ayarları
 ```
 
-## 🔌 API Endpoint'leri
 
-### Base URL
-```
-http://localhost:9090
-```
+## 📝 Notlar
 
-### Yazarlar API
+- Proje şu an geliştirme aşamasındadır. Aşağıdaki modüllerde bilinen hatalar mevcuttur ve düzeltilmesi planlanmaktadır:
 
-#### Tüm Yazarları Listele
-```http
-GET /api/yazarlar
-```
+- Yazar Modülü: Yazarlar sayfası (authors.html) backend ile iletişim kurarken veri eşleşmezliği yaşıyor. Yazar listesi şu an boş veya hatalı görünebiliyor (undefined hatası).
 
-**Response:**
-```json
-[
-  {
-    "id": 1,
-    "isim": "Ahmet Ümit",
-    "biyografi": "Türk yazar ve şair..."
-  }
-]
-```
+-  Ödünç Alma Sistemi: Backend tarafında altyapısı (Entity/Repository) hazırlanmış olsa da, Frontend bağlantısı (issue-book.html) henüz tamamlanmadı. Kitap atama işlemi şu an çalışmıyor.
 
-#### Yeni Yazar Ekle
-```http
-POST /api/yazarlar
-Content-Type: application/json
+- Kategori Gösterimi: Bazı kitap kartlarında kategori isimleri veritabanından çekilirken senkronizasyon sorunu yaşanabiliyor.
 
-{
-  "isim": "Yazar Adı",
-  "biyografi": "Yazar biyografisi"
-}
-```
+### Son Güncellemeler (2025)
 
-#### Yazar Güncelle
-```http
-PUT /api/yazarlar/{id}
-Content-Type: application/json
+1. **Ödünç İşlem Sistemi**
+   - OduncIslem Entity eklendi
+   - Detaylı ödünç takibi
+   - Gecikme hesaplama ve ceza sistemi
 
-{
-  "isim": "Güncellenmiş Ad",
-  "biyografi": "Güncellenmiş biyografi"
-}
-```
+2. **Frontend İyileştirmeleri**
+   - Dark Academia teması
+   - Responsive tasarım
+   - Arama özellikli dropdown'lar
+   - Toast bildirimleri
 
-#### Yazar Sil
-```http
-DELETE /api/yazarlar/{id}
-```
+3. **Backend İyileştirmeleri**
+   - Global Exception Handler
+   - DTO Pattern kullanımı
+   - Service Layer mimarisi
+   - Tip güvenliği (Long ID'ler)
 
-##  Güvenlik
-
-- Uygulama başladığında otomatik olarak bir admin kullanıcısı oluşturulur:
-  - **Kullanıcı Adı:** `admin`
-  - **Şifre:** `admin123`
-  - **Rol:** `ADMIN`
-
-- Şifreler BCrypt ile şifrelenerek veritabanında saklanır.
-
-- Şu anda `/api/**` endpoint'leri herkese açıktır (test amaçlı).
-
-## 📊 Veritabanı Şeması
-
-Proje aşağıdaki tabloları içerir:
-- `kullanicilar` - Sistem kullanıcıları
-- `yazarlar` - Kitap yazarları
-- `kitaplar` - Kütüphane kitapları
-- `ogrenciler` - Öğrenci bilgileri
-- `kategoriler` - Kitap kategorileri
-- `cezalar` - Öğrenci cezaları
-
-Tablolar JPA tarafından otomatik olarak oluşturulur/güncellenir (`spring.jpa.hibernate.ddl-auto=update`).
-
-##  Test Etme
-
-### Postman ile Test
-1. Postman'i açın
-2. Yeni bir request oluşturun
-3. Method olarak `GET`, `POST`, `PUT` veya `DELETE` seçin
-4. URL olarak `http://localhost:9090/api/yazarlar` girin
-5. POST ve PUT için Body sekmesinde JSON formatında veri gönderin
-
-### cURL ile Test
-```bash
-# Tüm yazarları listele
-curl http://localhost:9090/api/yazarlar
-
-# Yeni yazar ekle
-curl -X POST http://localhost:9090/api/yazarlar \
-  -H "Content-Type: application/json" \
-  -d '{"isim":"Test Yazar","biyografi":"Test biyografi"}'
-```
-
-##  Geliştirme Notları
-
-- Proje Spring Boot 3.5.7 ve Java 21 kullanmaktadır
-- Veritabanı bağlantı ayarları `application.properties` dosyasındadır
-- SQL sorguları konsolda gösterilir (`spring.jpa.show-sql=true`)
-- Tablolar otomatik olarak oluşturulur/güncellenir
-
-##  Sonraki Adımlar
-
-- [ ] Diğer entity'ler için Controller'ların oluşturulması
-- [ ] JWT (JSON Web Token) kimlik doğrulama entegrasyonu
-- [ ] API dokümantasyonu (Swagger/OpenAPI)
-- [ ] Unit testlerin yazılması
-- [ ] Frontend arayüzünün geliştirilmesi
-
-##  Geliştirici
-
-Proje geliştirme aşamasındadır.
+4. **Güvenlik**
+   - JWT Authentication
+   - Rol tabanlı yetkilendirme
+   - Secure password hashing (BCrypt)

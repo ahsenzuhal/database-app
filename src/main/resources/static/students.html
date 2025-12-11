@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Üye Yönetimi - Akıllı Kütüphane</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --bg-light: #f8fafc;
+            --bg-white: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border: #e2e8f0;
+            --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            background-color: var(--bg-light);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+        }
+
+        .navbar-custom {
+            background-color: var(--bg-white);
+            border-bottom: 1px solid var(--border);
+            box-shadow: var(--shadow);
+        }
+
+        .student-card {
+            background-color: var(--bg-white);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--primary);
+            border-radius: 12px;
+            padding: 1.5rem;
+            position: relative;
+            transition: all 0.2s;
+            height: 100%;
+        }
+
+        .student-card:hover {
+            transform: translateX(3px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .modal-content {
+            background-color: var(--bg-white);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+        }
+
+        .modal-header {
+            border-bottom: 1px solid var(--border);
+        }
+
+        .form-control {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .btn-sil {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            color: #ef4444;
+            background: none;
+            border: none;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-sil:hover {
+            color: #dc2626;
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-custom sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="/dashboard.html" style="font-weight: 600;">
+                <i class="bi bi-arrow-left-circle me-2"></i>Ana Sayfa
+            </a>
+            <span class="text-secondary">Üye İşlemleri</span>
+        </div>
+    </nav>
+
+    <div class="container py-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="fw-bold mb-1">Kayıtlı Öğrenciler</h2>
+                <p class="text-secondary mb-0">Toplam: <span id="toplamSayi">0</span></p>
+            </div>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#ogrenciEkleModal">
+                <i class="bi bi-person-plus-fill me-2"></i>Yeni Öğrenci
+            </button>
+        </div>
+
+        <div id="ogrenci-listesi" class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        </div>
+    </div>
+
+    <div class="modal fade" id="ogrenciEkleModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Yeni Öğrenci Kaydı</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="ogrenciForm">
+                        <div class="mb-3">
+                            <label class="form-label">Ad Soyad</label>
+                            <input type="text" id="yeniIsim" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">E-Posta</label>
+                            <input type="email" id="yeniEmail" class="form-control" required>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col">
+                                <label class="form-label">Bölüm</label>
+                                <input type="text" id="yeniBolum" class="form-control" placeholder="Örn: Hukuk">
+                            </div>
+                            <div class="col">
+                                <label class="form-label">Sınıf</label>
+                                <input type="text" id="yeniSinif" class="form-control" placeholder="Örn: 2. Sınıf">
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                    <button onclick="ogrenciKaydet()" class="btn btn-primary">Kaydet</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="global.js"></script>
+    <script>
+        const API_URL = "/api/ogrenciler";
+        let isAdmin = false;
+
+        document.addEventListener("DOMContentLoaded", () => {
+            if (typeof checkAuth === 'undefined' || !checkAuth()) {
+                console.error("checkAuth fonksiyonu bulunamadı veya yetkilendirme başarısız");
+                return;
+            }
+            
+            const role = localStorage.getItem("role");
+            isAdmin = role === "ADMIN" || role === "ROLE_ADMIN";
+            
+            ogrencileriGetir();
+        });
+
+        async function ogrencileriGetir() {
+            try {
+                const ogrenciler = await apiCall(API_URL);
+                if (!ogrenciler || !Array.isArray(ogrenciler)) {
+                    throw new Error("Geçersiz veri formatı");
+                }
+                
+                document.getElementById("toplamSayi").textContent = ogrenciler.length;
+                const grid = document.getElementById("ogrenci-listesi");
+                grid.innerHTML = "";
+
+                if (ogrenciler.length === 0) {
+                    grid.innerHTML = `<div class="col-12 text-center py-5 text-secondary">Kayıtlı öğrenci bulunamadı.</div>`;
+                    return;
+                }
+
+                ogrenciler.forEach(ogr => {
+                    const html = `
+                    <div class="col">
+                        <div class="student-card">
+                            ${isAdmin ? `
+                                <button onclick="ogrenciSil(${ogr.id})" class="btn-sil" title="Sil">
+                                    <i class="bi bi-trash3-fill"></i>
+                                </button>
+                            ` : ''}
+                            <div class="d-flex align-items-center">
+                                <div class="me-3">
+                                    <i class="bi bi-person-vcard" style="font-size: 2.5rem; color: var(--primary);"></i>
+                                </div>
+                                <div>
+                                    <h5 class="mb-1">${ogr.isim || "İsimsiz"}</h5>
+                                    <small class="text-secondary d-block">
+                                        <i class="bi bi-envelope me-1"></i>${ogr.email || "-"}
+                                    </small>
+                                    <div class="d-flex gap-2 mt-2">
+                                        <span class="badge bg-secondary">${ogr.bolum || '-'}</span>
+                                        <span class="badge bg-light text-dark border">${ogr.sinif || '-'}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+                    grid.innerHTML += html;
+                });
+            } catch (err) {
+                console.error(err);
+                showMessage("Öğrenciler yüklenemedi", "error");
+            }
+        }
+
+        async function ogrenciKaydet() {
+            const veri = {
+                isim: document.getElementById("yeniIsim").value,
+                email: document.getElementById("yeniEmail").value,
+                bolum: document.getElementById("yeniBolum").value,
+                sinif: document.getElementById("yeniSinif").value
+            };
+
+            try {
+                await apiCall(API_URL, {
+                    method: "POST",
+                    body: JSON.stringify(veri)
+                });
+                showMessage("Öğrenci kaydedildi", "success");
+                bootstrap.Modal.getInstance(document.getElementById('ogrenciEkleModal')).hide();
+                document.getElementById("ogrenciForm").reset();
+                ogrencileriGetir();
+            } catch (err) {
+                showMessage("Hata: " + (err.message || "Bir hata oluştu"), "error");
+            }
+        }
+
+        async function ogrenciSil(id) {
+            if (!confirm("Bu öğrenciyi silmek istediğinize emin misiniz?")) return;
+
+            try {
+                await apiCall(`${API_URL}/${id}`, {
+                    method: "DELETE"
+                });
+                showMessage("Öğrenci silindi", "success");
+                ogrencileriGetir();
+            } catch (err) {
+                showMessage("Hata: " + (err.message || "Bir hata oluştu"), "error");
+            }
+        }
+    </script>
+</body>
+</html>
