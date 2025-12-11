@@ -188,7 +188,7 @@ src/main/resources/
 
 - Kategori Gösterimi: Bazı kitap kartlarında kategori isimleri veritabanından çekilirken senkronizasyon sorunu yaşanabiliyor.
 
-### Son Güncellemeler (2025)
+### Son Güncellemeler (11.12.2025)
 
 1. **Ödünç İşlem Sistemi**
    - OduncIslem Entity eklendi
