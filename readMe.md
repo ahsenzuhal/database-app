@@ -4,6 +4,8 @@ Spring Boot backend ve Vanilla JavaScript frontend ile geliştirilmiştir.
 
 <img width="1915" height="948" alt="image" src="https://github.com/user-attachments/assets/e5303276-8323-4e2a-98a6-1440e67e7b46" />
 
+<img width="1701" height="708" alt="image" src="https://github.com/user-attachments/assets/e543ea14-db0f-4139-be28-ca3ab58ba265" />
+
 
 ## İçindekiler
 
@@ -112,7 +114,6 @@ Uygulama `http://localhost:9090` adresinde çalışacaktır.
 
 Projenin backend ve frontend mimarisi aşağıdaki gibidir:
 
-```text
 src/
 ├── main/
 │   ├── java/com/kutuphane/AkilliKutuphane/
@@ -139,32 +140,12 @@ src/
 
 - Proje şu an geliştirme aşamasındadır. Aşağıdaki modüllerde bilinen hatalar mevcuttur ve düzeltilmesi planlanmaktadır:
 
-
 - Kullanıcı Kaydı (Register): Şu an sisteme sadece veritabanından eklenen kullanıcılar girebiliyor. "Kayıt Ol" ekranı ve backend bağlantısı henüz yapılmadı.
 
 - Öğrenci Paneli (User UI): Standart kullanıcı (Öğrenci) giriş yaptığında sadece kendi ödünç aldığı kitapları görebileceği "Kitaplarım" sayfası henüz aktif değil.
 
-<<<<<<< HEAD
 -  E-Posta Bildirimleri: Kitap iade tarihi yaklaştığında veya geciktiğinde otomatik e-posta gönderen (JavaMailSender) mekanizma henüz entegre edilmedi.
-=======
-### Son Güncellemeler (11.12.2025)
 
-1. **Ödünç İşlem Sistemi**
-   - OduncIslem Entity eklendi
-   - Detaylı ödünç takibi
-   - Gecikme hesaplama ve ceza sistemi
-
-2. **Frontend İyileştirmeleri**
-   - Dark Academia teması
-   - Responsive tasarım
-   - Arama özellikli dropdown'lar
-   - Toast bildirimleri
-
-3. **Backend İyileştirmeleri**
-   - Global Exception Handler
-   - DTO Pattern kullanımı
-   - Service Layer mimarisi
-   - Tip güvenliği (Long ID'ler)
 
 4. **Güvenlik**
    - JWT Authentication
