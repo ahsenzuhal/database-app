@@ -34,3 +34,4 @@ public interface OduncIslemRepository extends JpaRepository<OduncIslem, Long> {
     List<OduncIslem> findByOgrenciIdOrderByAlisTarihiDesc(Integer ogrenciId);
 }
 
+

@@ -3,8 +3,11 @@ package com.kutuphane.AkilliKutuphane;
 import jakarta.persistence.*; // JPA anotasyonları için gerekli
 import java.util.List; // Eğer daha sonra ödünç aldığı kitapları listelemek istersek
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 @Entity // Bu sınıfın bir veritabanı varlığı olduğunu belirtir
 @Table(name = "ogrenciler") // Hangi tabloya karşılık geldiğini belirtir
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Ogrenci {
 
     @Id // Bu alanın birincil anahtar (Primary Key) olduğunu belirtir

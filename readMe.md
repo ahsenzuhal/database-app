@@ -105,106 +105,40 @@ mvn spring-boot:run
 
 Uygulama `http://localhost:9090` adresinde çalışacaktır.
 
-##  Proje Yapısı
+## 📂 Güncel Dosya Yapısı (Project Structure)
 
-```
-src/main/java/com/kutuphane/AkilliKutuphane/
-├── controller/              # REST API Controller'ları
-│   ├── AuthController.java
-│   ├── KitapController.java
-│   ├── OgrenciController.java
-│   ├── YazarController.java
-│   ├── KategoriController.java
-│   ├── CezaController.java
-│   └── OduncIslemController.java
-├── service/                 # İş mantığı katmanı
-│   ├── KullaniciService.java
-│   ├── KitapService.java
-│   ├── OgrenciService.java
-│   ├── YazarService.java
-│   ├── KategoriService.java
-│   ├── CezaService.java
-│   ├── OduncIslemService.java
-│   └── EmailService.java
-├── repository/             # Veritabanı erişim katmanı
-│   ├── KullaniciRepository.java
-│   ├── KitapRepository.java
-│   ├── OgrenciRepository.java
-│   ├── YazarRepository.java
-│   ├── KategoriRepository.java
-│   ├── CezaRepository.java
-│   └── OduncIslemRepository.java
-├── dto/                    # Data Transfer Objects
-│   ├── AuthRequest.java
-│   ├── AuthResponse.java
-│   ├── RegisterRequest.java
-│   ├── KitapRequest.java
-│   ├── BorrowRequest.java
-│   └── OduncIslemResponseDTO.java
-├── config/                 # Yapılandırma sınıfları
-│   ├── SecurityConfig.java
-│   ├── JwtUtil.java
-│   ├── JwtAuthenticationFilter.java
-│   ├── JwtAuthenticationEntryPoint.java
-│   └── CustomUserDetailsService.java
-├── exception/              # Exception Handler
-│   └── GlobalExceptionHandler.java
-└── [Entity Classes]        # Veritabanı entity'leri
-    ├── Kullanici.java
-    ├── Kitap.java
-    ├── Ogrenci.java
-    ├── Yazar.java
-    ├── Kategori.java
-    ├── Ceza.java
-    └── OduncIslem.java
+Projenin backend ve frontend mimarisi aşağıdaki gibidir:
 
-src/main/resources/
-├── static/                 # Frontend dosyaları
-│   ├── login.html
-│   ├── dashboard.html
-│   ├── books.html
-│   ├── students.html
-│   ├── authors.html
-│   ├── categories.html
-│   ├── issue-book.html
-│   ├── my-books.html
-│   ├── borrows.html
-│   ├── penalties.html
-│   └── global.js
-└── application.properties  # Uygulama ayarları
-```
+```text
+src/
+├── main/
+│   ├── java/com/kutuphane/AkilliKutuphane/
+│   │   ├── config/             # Security ve JWT yapılandırmaları
+│   │   ├── controller/         # REST API uç noktaları (Kitap, Yazar, Ödünç vb.)
+│   │   ├── dto/                # Veri transfer objeleri (BorrowRequest, KitapRequest vb.)
+│   │   ├── exception/          # Global hata yönetimi
+│   │   ├── model/              # Veritabanı varlıkları (Entity)
+│   │   ├── repository/         # Veritabanı erişim katmanı (JPA)
+│   │   └── service/            # İş mantığı (Business Logic)
+│   └── resources/
+│       ├── static/             # Frontend Dosyaları
+│       │   ├── authors.html    # Yazar yönetimi
+│       │   ├── books.html      # Kitap yönetimi (Mavi/Beyaz Tema)
+│       │   ├── borrows.html    # Ödünç takibi ve iade
+│       │   ├── dashboard.html  # Yönetim paneli
+│       │   ├── login.html      # Giriş ekranı
+│       │   ├── penalties.html  # Ceza yönetimi
+│       │   └── ...
+│       └── application.properties
 
 
 ## 📝 Notlar
 
 - Proje şu an geliştirme aşamasındadır. Aşağıdaki modüllerde bilinen hatalar mevcuttur ve düzeltilmesi planlanmaktadır:
 
-- Yazar Modülü: Yazarlar sayfası (authors.html) backend ile iletişim kurarken veri eşleşmezliği yaşıyor. Yazar listesi şu an boş veya hatalı görünebiliyor (undefined hatası).
 
--  Ödünç Alma Sistemi: Backend tarafında altyapısı (Entity/Repository) hazırlanmış olsa da, Frontend bağlantısı (issue-book.html) henüz tamamlanmadı. Kitap atama işlemi şu an çalışmıyor.
+- Kullanıcı Kaydı (Register): Şu an sisteme sadece veritabanından eklenen kullanıcılar girebiliyor. "Kayıt Ol" ekranı ve backend bağlantısı henüz yapılmadı.
 
-- Kategori Gösterimi: Bazı kitap kartlarında kategori isimleri veritabanından çekilirken senkronizasyon sorunu yaşanabiliyor.
+- Öğrenci Paneli (User UI): Standart kullanıcı (Öğrenci) giriş yaptığında sadece kendi ödünç aldığı kitapları görebileceği "Kitaplarım" sayfası henüz aktif değil.
 
-### Son Güncellemeler (2025)
-
-1. **Ödünç İşlem Sistemi**
-   - OduncIslem Entity eklendi
-   - Detaylı ödünç takibi
-   - Gecikme hesaplama ve ceza sistemi
-
-2. **Frontend İyileştirmeleri**
-   - Dark Academia teması
-   - Responsive tasarım
-   - Arama özellikli dropdown'lar
-   - Toast bildirimleri
-
-3. **Backend İyileştirmeleri**
-   - Global Exception Handler
-   - DTO Pattern kullanımı
-   - Service Layer mimarisi
-   - Tip güvenliği (Long ID'ler)
-
-4. **Güvenlik**
-   - JWT Authentication
-   - Rol tabanlı yetkilendirme
-   - Secure password hashing (BCrypt)
+-  E-Posta Bildirimleri: Kitap iade tarihi yaklaştığında veya geciktiğinde otomatik e-posta gönderen (JavaMailSender) mekanizma henüz entegre edilmedi.

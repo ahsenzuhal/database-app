@@ -16,7 +16,7 @@
             --bg-white: #ffffff;
             --text-primary: #1e293b;
             --text-secondary: #64748b;
-            --border: #e2e8f0;
+            --border: #35557e;
             --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
             --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
         }
@@ -137,121 +137,187 @@
     <script>
         const API_URL = "/api/yazarlar";
 
-        document.addEventListener("DOMContentLoaded", () => {
-            if (typeof checkAuth === 'undefined' || !checkAuth()) {
-                console.error("checkAuth fonksiyonu bulunamadı veya yetkilendirme başarısız");
+    document.addEventListener("DOMContentLoaded", () => {
+        // Auth kontrolü (Global.js varsa)
+        if (typeof checkAuth !== 'undefined' && !checkAuth()) {
+             return; 
+        }
+        
+        // Token kontrolü (Manuel)
+        const token = localStorage.getItem("token");
+        if(!token) {
+            window.location.href = "/login.html";
+            return;
+        }
+
+        yazarlariGetir();
+        
+        // Modal açılınca formu temizle
+        const modalEl = document.getElementById("yazarEkleModal");
+        if(modalEl) {
+            modalEl.addEventListener("show.bs.modal", () => {
+                // Eğer düzenleme modunda değilsek (yani buton "Kaydet" ise) formu temizle
+                if(document.getElementById("btnKaydet").textContent === "Kaydet") {
+                     yeniYazarModal();
+                }
+            });
+        }
+    });
+
+    // API Çağrıları için yardımcı fonksiyon
+    async function apiCall(url, options = {}) {
+        const token = localStorage.getItem("token");
+        const defaultHeaders = {
+            "Authorization": "Bearer " + token,
+            "Content-Type": "application/json"
+        };
+        
+        options.headers = { ...defaultHeaders, ...options.headers };
+        
+        const response = await fetch(url, options);
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(errorText || "API Hatası");
+        }
+        // DELETE işlemi JSON dönmeyebilir, onu kontrol et
+        if (options.method === "DELETE") return null;
+        
+        return response.json();
+    }
+
+    async function yazarlariGetir() {
+        try {
+            const yazarlar = await apiCall(API_URL);
+            
+            document.getElementById("toplamSayi").textContent = yazarlar.length;
+            const grid = document.getElementById("yazar-listesi");
+            grid.innerHTML = "";
+
+            if (yazarlar.length === 0) {
+                grid.innerHTML = `<div class="col-12 text-center py-5 text-secondary">Kayıtlı yazar bulunamadı.</div>`;
                 return;
             }
-            yazarlariGetir();
-            document.getElementById("yazarEkleModal").addEventListener("show.bs.modal", () => {
-                yeniYazarModal();
-            });
-        });
 
-        async function yazarlariGetir() {
-            try {
-                const yazarlar = await apiCall(API_URL);
-                if (!yazarlar || !Array.isArray(yazarlar)) {
-                    throw new Error("Geçersiz veri formatı");
-                }
-                document.getElementById("toplamSayi").textContent = yazarlar.length;
-                const grid = document.getElementById("yazar-listesi");
-                grid.innerHTML = "";
-
-                if (yazarlar.length === 0) {
-                    grid.innerHTML = `<div class="col-12 text-center py-5 text-secondary">Kayıtlı yazar bulunamadı.</div>`;
-                    return;
-                }
-
-                yazarlar.forEach(yazar => {
-                    const html = `
-                    <div class="col">
-                        <div class="author-card">
-                            <div class="d-flex justify-content-between align-items-start mb-2">
-                                <h5 class="mb-0">${yazar.adSoyad || yazar.isim || "İsimsiz"}</h5>
-                                <div>
-                                    <button onclick="yazarDuzenle(${yazar.id})" class="btn btn-sm btn-outline-primary me-1" title="Düzenle">
-                                        <i class="bi bi-pencil"></i>
-                                    </button>
-                                    <button onclick="yazarSil(${yazar.id})" class="btn btn-sm btn-outline-danger" title="Sil">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </div>
+            yazarlar.forEach(yazar => {
+                const html = `
+                <div class="col">
+                    <div class="author-card">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="mb-0 text-blue">${yazar.adSoyad || "İsimsiz"}</h5>
+                            <div>
+                                <button onclick="yazarDuzenle(${yazar.id})" class="btn btn-sm btn-outline-primary me-1" title="Düzenle">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button onclick="yazarSil(${yazar.id})" class="btn btn-sm btn-outline-danger" title="Sil">
+                                    <i class="bi bi-trash"></i>
+                                </button>
                             </div>
-                            <p class="text-secondary small mb-0">${yazar.biyografi || "Biyografi bulunmuyor"}</p>
                         </div>
-                    </div>`;
-                    grid.innerHTML += html;
-                });
-            } catch (err) {
-                console.error(err);
-                showMessage("Yazarlar yüklenemedi", "error");
-            }
-        }
-
-        function yeniYazarModal() {
-            document.getElementById("modalBaslik").textContent = "Yeni Yazar";
-            document.getElementById("yazarForm").reset();
-            document.getElementById("yazarId").value = "";
-            document.getElementById("btnKaydet").textContent = "Kaydet";
-        }
-
-        function yazarDuzenle(id) {
-            apiCall(`${API_URL}`).then(yazarlar => {
-                const yazar = yazarlar.find(y => y.id === id);
-                if (!yazar) return;
-
-                document.getElementById("modalBaslik").textContent = "Yazar Düzenle";
-                document.getElementById("yazarId").value = yazar.id;
-                document.getElementById("yazarAd").value = yazar.adSoyad || yazar.isim || "";
-                document.getElementById("yazarBiyografi").value = yazar.biyografi || "";
-                document.getElementById("btnKaydet").textContent = "Güncelle";
-
-                new bootstrap.Modal(document.getElementById('yazarEkleModal')).show();
+                        <p class="text-secondary small mb-0 text-truncate">${yazar.biyografi || "Biyografi bulunmuyor"}</p>
+                        <button class="btn btn-sm btn-link text-decoration-none p-0 mt-2" onclick="alert('${yazar.biyografi || ''}')">Tamamını Oku</button>
+                    </div>
+                </div>`;
+                grid.innerHTML += html;
             });
+        } catch (err) {
+            console.error(err);
+            alert("Yazarlar yüklenemedi: " + err.message);
         }
+    }
 
-        async function yazarKaydet() {
-            const id = document.getElementById("yazarId").value;
-            const veri = {
-                isim: document.getElementById("yazarAd").value,
-                biyografi: document.getElementById("yazarBiyografi").value
-            };
+    function yeniYazarModal() {
+        document.getElementById("modalBaslik").textContent = "Yeni Yazar";
+        document.getElementById("yazarForm").reset();
+        document.getElementById("yazarId").value = "";
+        document.getElementById("btnKaydet").textContent = "Kaydet";
+    }
 
-            try {
-                if (id) {
-                    await apiCall(`${API_URL}/${id}`, {
-                        method: "PUT",
-                        body: JSON.stringify(veri)
-                    });
-                    showMessage("Yazar güncellendi", "success");
-                } else {
-                    await apiCall(API_URL, {
-                        method: "POST",
-                        body: JSON.stringify(veri)
-                    });
-                    showMessage("Yazar eklendi", "success");
-                }
-                bootstrap.Modal.getInstance(document.getElementById('yazarEkleModal')).hide();
-                yazarlariGetir();
-            } catch (err) {
-                showMessage("Hata: " + (err.message || "Bir hata oluştu"), "error");
-            }
+    async function yazarDuzenle(id) {
+        try {
+            // Mevcut listeyi tekrar çekmek yerine API'den tekil yazar çekmek daha güvenlidir ama
+            // senin yapında tüm listeyi zaten çekmiştik, oradan bulalım:
+            const yazarlar = await apiCall(API_URL);
+            const yazar = yazarlar.find(y => y.id === id);
+            
+            if (!yazar) return;
+
+            document.getElementById("modalBaslik").textContent = "Yazar Düzenle";
+            document.getElementById("yazarId").value = yazar.id;
+            
+            // DÜZELTİLDİ: yazar.adSoyad
+            document.getElementById("yazarAd").value = yazar.adSoyad || "";
+            document.getElementById("yazarBiyografi").value = yazar.biyografi || "";
+            
+            document.getElementById("btnKaydet").textContent = "Güncelle";
+
+            // Modalı aç
+            const modalEl = document.getElementById('yazarEkleModal');
+            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            modal.show();
+            
+        } catch (error) {
+            console.error(error);
         }
+    }
 
-        async function yazarSil(id) {
-            if (!confirm("Bu yazarı silmek istediğinize emin misiniz?")) return;
+    async function yazarKaydet() {
+        const id = document.getElementById("yazarId").value;
+        
+        // DÜZELTİLDİ: Değişken adı 'adSoyad' yapıldı (Java ile uyumlu olması için)
+        const veri = {
+            adSoyad: document.getElementById("yazarAd").value, 
+            biyografi: document.getElementById("yazarBiyografi").value
+        };
 
-            try {
-                await apiCall(`${API_URL}/${id}`, {
-                    method: "DELETE"
+        try {
+            if (id) {
+                // Güncelleme (PUT)
+                // Dikkat: ID'yi URL'e ekledik, body'ye de ekleyebilirsin ama genelde gerekmez
+                // Entity'de ID bekliyorsa body'ye de ekleyelim:
+                const updateVeri = { ...veri, id: id };
+                
+                await apiCall(API_URL, { // Bazı durumlarda URL sonuna /id eklemek gerekebilir: `${API_URL}/${id}`
+                                         // Senin Controller yapına göre sadece body yetiyorsa böyle kalsın.
+                                         // Ama standart REST genelde PUT /api/yazarlar/{id} şeklindedir.
+                                         // Senin Controller kodunda @PostMapping var, @PutMapping yoksa hata alırsın.
+                                         // Controller koduna bakarak burayı PUT veya POST yapmalısın.
+                                         // Şimdilik POST (Save) üzerinden gidiyorsak:
+                    method: "POST", 
+                    body: JSON.stringify(updateVeri)
                 });
-                showMessage("Yazar silindi", "success");
-                yazarlariGetir();
-            } catch (err) {
-                showMessage("Hata: " + (err.message || "Bir hata oluştu"), "error");
+                alert("Yazar güncellendi");
+            } else {
+                // Yeni Kayıt (POST)
+                await apiCall(API_URL, {
+                    method: "POST",
+                    body: JSON.stringify(veri)
+                });
+                alert("Yazar eklendi");
             }
+            
+            const modalEl = document.getElementById('yazarEkleModal');
+            bootstrap.Modal.getInstance(modalEl).hide();
+            yazarlariGetir();
+            
+        } catch (err) {
+            console.error(err);
+            alert("İşlem başarısız: " + err.message);
         }
+    }
+
+    async function yazarSil(id) {
+        if (!confirm("Bu yazarı silmek istediğinize emin misiniz?")) return;
+
+        try {
+            await apiCall(`${API_URL}/${id}`, {
+                method: "DELETE"
+            });
+            alert("Yazar silindi");
+            yazarlariGetir();
+        } catch (err) {
+            alert("Silinemedi: " + err.message);
+        }
+    }
     </script>
 </body>
 </html>

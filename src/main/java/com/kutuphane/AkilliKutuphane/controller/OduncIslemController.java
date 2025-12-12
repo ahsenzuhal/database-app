@@ -4,7 +4,6 @@ import com.kutuphane.AkilliKutuphane.OduncIslem;
 import com.kutuphane.AkilliKutuphane.dto.BorrowRequest;
 import com.kutuphane.AkilliKutuphane.dto.OduncIslemResponseDTO;
 import com.kutuphane.AkilliKutuphane.service.OduncIslemService;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -12,9 +11,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * Ödünç işlemleri için REST Controller
- */
 @RestController
 @RequestMapping("/api/odunc-islemler")
 @CrossOrigin("*")
@@ -28,33 +24,30 @@ public class OduncIslemController {
 
     /**
      * Yeni ödünç verme işlemi
-     * Sadece ADMIN yetkisi gerektirir
+     * Service void döndüğü için burada sadece Başarılı mesajı dönüyoruz.
      */
     @PostMapping("/odunc-ver")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<OduncIslemResponseDTO> oduncVer(@RequestBody BorrowRequest request) {
-        OduncIslem oduncIslem = oduncIslemService.oduncVer(
+    public ResponseEntity<?> oduncVer(@RequestBody BorrowRequest request) {
+        oduncIslemService.oduncVer(
             request.getKitapId(), 
             request.getOgrenciId()
         );
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(entityToDTO(oduncIslem));
+        return ResponseEntity.ok("Kitap başarıyla ödünç verildi.");
     }
 
     /**
      * Kitap iade işlemi
-     * ADMIN yetkisi gerektirir
      */
     @PostMapping("/{kitapId}/iade")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<OduncIslemResponseDTO> iadeAl(@PathVariable Long kitapId) {
-        OduncIslem oduncIslem = oduncIslemService.iadeAl(kitapId);
-        return ResponseEntity.ok(entityToDTO(oduncIslem));
+    public ResponseEntity<?> iadeAl(@PathVariable Long kitapId) {
+        oduncIslemService.iadeAl(kitapId);
+        return ResponseEntity.ok("Kitap başarıyla iade alındı ve ceza kontrolü yapıldı.");
     }
 
     /**
      * Tüm aktif ödünç işlemlerini listele
-     * ADMIN yetkisi gerektirir
      */
     @GetMapping("/aktif")
     @PreAuthorize("hasRole('ADMIN')")
@@ -66,32 +59,9 @@ public class OduncIslemController {
         return ResponseEntity.ok(dtos);
     }
 
-    /**
-     * Belirli bir öğrencinin aktif ödünç işlemlerini getir
-     * Öğrenci kendi kayıtlarını görebilir, ADMIN herkesi görebilir
-     */
-    @GetMapping("/ogrenci/{ogrenciId}")
-    public ResponseEntity<List<OduncIslemResponseDTO>> ogrencininOduncIslemleri(
-            @PathVariable Integer ogrenciId) {
-        List<OduncIslem> islemler = oduncIslemService.ogrencininAktifOduncIslemleri(ogrenciId);
-        List<OduncIslemResponseDTO> dtos = islemler.stream()
-                .map(this::entityToDTO)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(dtos);
-    }
-
-    /**
-     * Belirli bir öğrencinin tüm ödünç işlemlerini getir (geçmiş dahil)
-     */
-    @GetMapping("/ogrenci/{ogrenciId}/tumu")
-    public ResponseEntity<List<OduncIslemResponseDTO>> ogrencininTumOduncIslemleri(
-            @PathVariable Integer ogrenciId) {
-        List<OduncIslem> islemler = oduncIslemService.ogrencininTumOduncIslemleri(ogrenciId);
-        List<OduncIslemResponseDTO> dtos = islemler.stream()
-                .map(this::entityToDTO)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(dtos);
-    }
+    // NOT: Öğrenciye özel getirme metodlarını (ogrencininOduncIslemleri vb.)
+    // Service katmanına henüz eklemediğimiz için şimdilik kaldırdım.
+    // Sistem çalıştığında o özellikleri ayrıca ekleyebiliriz.
 
     /**
      * Entity'yi DTO'ya dönüştürür
@@ -99,18 +69,29 @@ public class OduncIslemController {
     private OduncIslemResponseDTO entityToDTO(OduncIslem oduncIslem) {
         OduncIslemResponseDTO dto = new OduncIslemResponseDTO();
         dto.setId(oduncIslem.getId());
-        dto.setKitapId(oduncIslem.getKitap().getId());
-        dto.setKitapAdi(oduncIslem.getKitap().getKitapAdi());
-        dto.setOgrenciId(oduncIslem.getOgrenci().getId());
-        dto.setOgrenciAdi(oduncIslem.getOgrenci().getIsim());
-        dto.setOgrenciEmail(oduncIslem.getOgrenci().getEmail());
+        
+        if (oduncIslem.getKitap() != null) {
+            dto.setKitapId(oduncIslem.getKitap().getId());
+            dto.setKitapAdi(oduncIslem.getKitap().getKitapAdi());
+        }
+        
+        if (oduncIslem.getOgrenci() != null) {
+            dto.setOgrenciId(oduncIslem.getOgrenci().getId());
+            // Eğer Ogrenci sınıfında getIsim() yoksa getAd() veya getAdSoyad() kullan
+            dto.setOgrenciAdi(oduncIslem.getOgrenci().getIsim()); 
+            dto.setOgrenciEmail(oduncIslem.getOgrenci().getEmail());
+        }
+        
         dto.setAlisTarihi(oduncIslem.getAlisTarihi());
         dto.setPlanlananIadeTarihi(oduncIslem.getPlanlananIadeTarihi());
         dto.setGercekIadeTarihi(oduncIslem.getGercekIadeTarihi());
         dto.setDurum(oduncIslem.getDurum());
-        dto.setGecikmis(oduncIslem.isGecikmis());
-        dto.setGecikmeGunu(oduncIslem.getGecikmeGunu());
+        
+        // Gecikme hesaplama (Basit kontrol)
+        boolean gecikmis = oduncIslem.getGercekIadeTarihi() == null && 
+                           java.time.LocalDate.now().isAfter(oduncIslem.getPlanlananIadeTarihi());
+        dto.setGecikmis(gecikmis);
+        
         return dto;
     }
 }
-

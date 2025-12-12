@@ -13,26 +13,14 @@ public class Kategori {
     @Column(name = "kategori_id")
     private Long id;
 
-    // DİKKAT: Frontend burayı 'kategoriAdi' olarak bekliyor.
-    // Eğer burada 'ad' veya 'isim' yazıyorsa hata alırsın.
+    // --- DÜZELTME ---
+    // Veritabanında muhtemelen 'kategori_adi' olarak geçiyor.
     @Column(name = "kategori_adi", nullable = false)
     private String kategoriAdi;
 
-    // --- GETTER VE SETTER METOTLARI ---
-    
-    public Long getId() {
-        return id;
-    }
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getKategoriAdi() {
-        return kategoriAdi;
-    }
-
-    public void setKategoriAdi(String kategoriAdi) {
-        this.kategoriAdi = kategoriAdi;
-    }
+    public String getKategoriAdi() { return kategoriAdi; }
+    public void setKategoriAdi(String kategoriAdi) { this.kategoriAdi = kategoriAdi; }
 }

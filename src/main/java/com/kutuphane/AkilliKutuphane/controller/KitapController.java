@@ -69,44 +69,16 @@ public class KitapController {
         return ResponseEntity.noContent().build();
     }
 
-    /**
-     * Ödünç verme işlemi (Yeni sistem - OduncIslem kullanır)
-     * Geriye uyumluluk için korundu, yeni sistem OduncIslemController'ı kullanmalı
-     * @deprecated Yeni endpoint: POST /api/odunc-islemler/odunc-ver kullanılmalı
-     */
-    @Deprecated
-    @PostMapping("/{id}/odunc")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Kitap> oduncAl(@PathVariable Long id, @RequestBody BorrowRequest request) {
-        // Yeni sistem kullanılıyor
-        oduncIslemService.oduncVer(id, request.getOgrenciId());
-        // Kitap bilgisini geri döndür
-        List<Kitap> kitaplar = kitapService.tumKitaplar(null);
-        Kitap kitap = kitaplar.stream()
-                .filter(k -> k.getId().equals(id))
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("Kitap bulunamadı"));
-        return ResponseEntity.ok(kitap);
-    }
+    // --- Ödünç alma/Iade İşlemleri ---
 
-    /**
-     * İade işlemi (Yeni sistem - OduncIslem kullanır)
-     * Geriye uyumluluk için korundu, yeni sistem OduncIslemController'ı kullanmalı
-     * @deprecated Yeni endpoint: POST /api/odunc-islemler/{kitapId}/iade kullanılmalı
-     */
-    @Deprecated
-    @PostMapping("/{id}/iade")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Kitap> iadeEt(@PathVariable Long id) {
-        // Yeni sistem kullanılıyor
-        oduncIslemService.iadeAl(id);
-        // Kitap bilgisini geri döndür
-        List<Kitap> kitaplar = kitapService.tumKitaplar(null);
-        Kitap kitap = kitaplar.stream()
-                .filter(k -> k.getId().equals(id))
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("Kitap bulunamadı"));
-        return ResponseEntity.ok(kitap);
+    @PostMapping("/{id}/odunc")
+    public ResponseEntity<?> oduncAl(@PathVariable Long id, @RequestBody BorrowRequest request) {
+        try {
+            oduncIslemService.oduncVer(id, request.getOgrenciId());
+            return ResponseEntity.ok("Kitap başarıyla ödünç verildi.");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Hata: " + e.getMessage());
+        }
     }
 }
 

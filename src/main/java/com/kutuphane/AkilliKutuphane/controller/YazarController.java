@@ -42,7 +42,7 @@ public class YazarController {
         Yazar mevcutYazar = yazarService.yazarGetir(id);
         if (mevcutYazar != null) {
             mevcutYazar.setAdSoyad(yazarBilgileri.getAdSoyad() != null ? 
-                yazarBilgileri.getAdSoyad() : yazarBilgileri.getIsim());
+                yazarBilgileri.getAdSoyad() : yazarBilgileri.getAdSoyad());
             mevcutYazar.setBiyografi(yazarBilgileri.getBiyografi());
             Yazar guncellenmisYazar = yazarService.yazarKaydet(mevcutYazar);
             return new ResponseEntity<>(guncellenmisYazar, HttpStatus.OK);

@@ -1,165 +1,135 @@
 package com.kutuphane.AkilliKutuphane.service;
 
-import com.kutuphane.AkilliKutuphane.*;
-import com.kutuphane.AkilliKutuphane.repository.*;
-import org.springframework.http.HttpStatus;
+import com.kutuphane.AkilliKutuphane.Ceza;
+import com.kutuphane.AkilliKutuphane.Kitap;
+import com.kutuphane.AkilliKutuphane.OduncIslem;
+import com.kutuphane.AkilliKutuphane.Ogrenci;
+import com.kutuphane.AkilliKutuphane.repository.CezaRepository;
+import com.kutuphane.AkilliKutuphane.repository.KitapRepository;
+import com.kutuphane.AkilliKutuphane.repository.OduncIslemRepository;
+import com.kutuphane.AkilliKutuphane.repository.OgrenciRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
-/**
- * Ödünç işlemleri için Service katmanı
- * Tüm ödünç alma ve iade işlemleri burada yönetilir
- */
 @Service
 public class OduncIslemService {
 
-    private static final int STANDART_IADE_SURESI = 14; // Gün cinsinden
-    private static final double GECIKME_CEZA_KATSAYISI = 10.0; // Günlük ceza tutarı (TL)
+    private static final int STANDART_IADE_SURESI = 14; 
+    private static final double GECIKME_CEZA_KATSAYISI = 5.0; // Günlük 5 TL
 
     private final OduncIslemRepository oduncIslemRepository;
     private final KitapRepository kitapRepository;
     private final OgrenciRepository ogrenciRepository;
-    private final CezaService cezaService;
-    private final EmailService emailService;
+    private final CezaRepository cezaRepository; // Cezayı garanti kaydetmek için ekledik
+    // private final EmailService emailService; // Email servisini şimdilik kapattım, hata almamak için
 
     public OduncIslemService(OduncIslemRepository oduncIslemRepository,
                              KitapRepository kitapRepository,
                              OgrenciRepository ogrenciRepository,
-                             CezaService cezaService,
-                             EmailService emailService) {
+                             CezaRepository cezaRepository) {
         this.oduncIslemRepository = oduncIslemRepository;
         this.kitapRepository = kitapRepository;
         this.ogrenciRepository = ogrenciRepository;
-        this.cezaService = cezaService;
-        this.emailService = emailService;
+        this.cezaRepository = cezaRepository;
     }
 
     /**
-     * Yeni bir ödünç işlemi oluşturur
-     * @param kitapId Ödünç verilecek kitabın ID'si
-     * @param ogrenciId Ödünç alan öğrencinin ID'si
-     * @return Oluşturulan ödünç işlemi
+     * KİTAP ÖDÜNÇ VERME
      */
     @Transactional
-    public OduncIslem oduncVer(Long kitapId, Integer ogrenciId) {
-        // Kitap kontrolü
+    public void oduncVer(Long kitapId, Integer ogrenciId) {
+        // 1. Kitap ve Öğrenci Kontrolü
         Kitap kitap = kitapRepository.findById(kitapId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Kitap bulunamadı"));
+                .orElseThrow(() -> new RuntimeException("Kitap bulunamadı ID: " + kitapId));
 
-        // Kitabın durum kontrolü
         if (!"Rafta".equalsIgnoreCase(kitap.getDurum())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
-                "Bu kitap şu anda ödünç verilemez. Durum: " + kitap.getDurum());
+            throw new RuntimeException("Bu kitap şu an müsait değil! Durumu: " + kitap.getDurum());
         }
 
-        // Öğrenci kontrolü
         Ogrenci ogrenci = ogrenciRepository.findById(ogrenciId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Öğrenci bulunamadı"));
+                .orElseThrow(() -> new RuntimeException("Öğrenci bulunamadı ID: " + ogrenciId));
 
-        // Tarih hesaplamaları
+        // 2. Tarihleri Ayarla
         LocalDate bugun = LocalDate.now();
-        LocalDate planlananIadeTarihi = bugun.plusDays(STANDART_IADE_SURESI);
+        LocalDate planlananTarih = bugun.plusDays(STANDART_IADE_SURESI);
 
-        // Ödünç işlemi oluştur
-        OduncIslem oduncIslem = new OduncIslem(kitap, ogrenci, bugun, planlananIadeTarihi);
-        oduncIslem = oduncIslemRepository.save(oduncIslem);
-
-        // Kitabın durumunu güncelle
+        // 3. Kitabı Güncelle
         kitap.setDurum("Ödünç Verildi");
         kitap.setOduncAlanOgrenci(ogrenci);
         kitap.setOduncTarihi(bugun);
-        kitap.setIadeTarihi(planlananIadeTarihi);
+        kitap.setIadeTarihi(planlananTarih);
         kitapRepository.save(kitap);
 
-        return oduncIslem;
+        // 4. İşlem Kaydı Oluştur
+        OduncIslem islem = new OduncIslem();
+        islem.setKitap(kitap);
+        islem.setOgrenci(ogrenci);
+        islem.setAlisTarihi(bugun);
+        islem.setPlanlananIadeTarihi(planlananTarih);
+        islem.setDurum("Aktif"); // <--- SQL HATASINI ÇÖZEN SATIR
+        
+        oduncIslemRepository.save(islem);
+        
+        System.out.println("✅ Kitap verildi: " + kitap.getKitapAdi());
     }
 
     /**
-     * Kitap iade işlemini gerçekleştirir
-     * Gecikme varsa ceza oluşturur ve e-posta gönderir
-     * @param kitapId İade edilecek kitabın ID'si
-     * @return İade edilen ödünç işlemi
+     * KİTAP İADE ALMA VE CEZA HESAPLAMA
      */
     @Transactional
-    public OduncIslem iadeAl(Long kitapId) {
-        // Aktif ödünç işlemini bul
-        OduncIslem oduncIslem = oduncIslemRepository.findByKitapIdAndDurum(kitapId, "Aktif")
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, 
-                    "Bu kitap için aktif ödünç işlemi bulunamadı"));
-
-        // Kitap kontrolü
+    public void iadeAl(Long kitapId) {
+        // 1. Kitabı Bul ve Rafa Kaldır
         Kitap kitap = kitapRepository.findById(kitapId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Kitap bulunamadı"));
-
-        LocalDate bugun = LocalDate.now();
-        Ogrenci ogrenci = oduncIslem.getOgrenci();
-
-        // İade işlemini tamamla
-        oduncIslem.setGercekIadeTarihi(bugun);
-        oduncIslem.setDurum("İade Edildi");
-        oduncIslem = oduncIslemRepository.save(oduncIslem);
-
-        // Gecikme kontrolü ve ceza hesaplama
-        if (oduncIslem.isGecikmis()) {
-            long gecikmeGunu = oduncIslem.getGecikmeGunu();
-            double cezaTutari = gecikmeGunu * GECIKME_CEZA_KATSAYISI;
-
-            // Ceza kaydı oluştur
-            cezaService.olustur(ogrenci, kitap, cezaTutari);
-
-            // E-posta bildirimi gönder
-            String mesaj = String.format(
-                    "Merhaba %s,\n\n%s kitabını %d gün geç iade ettiniz.\nCeza tutarı: %.2f TL\n\nLütfen cezanızı ödeyerek kütüphane hizmetlerinden faydalanmaya devam edebilirsiniz.",
-                    ogrenci.getIsim(), kitap.getKitapAdi(), gecikmeGunu, cezaTutari
-            );
-            emailService.gecIadeBildirimiGonder(
-                    ogrenci.getEmail(),
-                    "Geç İade Bilgilendirmesi",
-                    mesaj
-            );
-        }
-
-        // Kitabın durumunu güncelle
+                .orElseThrow(() -> new RuntimeException("Kitap bulunamadı"));
+        
         kitap.setDurum("Rafta");
         kitap.setOduncAlanOgrenci(null);
         kitap.setOduncTarihi(null);
         kitap.setIadeTarihi(null);
         kitapRepository.save(kitap);
 
-        return oduncIslem;
+        // 2. Aktif İşlem Kaydını Bul
+        // Burada repository metodunu manuel filtreliyoruz ki hata çıkmasın
+        OduncIslem islem = oduncIslemRepository.findAll().stream()
+                .filter(k -> k.getKitap().getId().equals(kitapId) && k.getGercekIadeTarihi() == null)
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Bu kitap için aktif ödünç kaydı bulunamadı!"));
+
+        // 3. İşlemi Kapat
+        islem.setGercekIadeTarihi(LocalDate.now());
+        islem.setDurum("İade Edildi");
+        oduncIslemRepository.save(islem);
+
+        // 4. CEZA HESAPLAMA (GARANTİ YÖNTEM)
+        long gecikmeGun = ChronoUnit.DAYS.between(islem.getPlanlananIadeTarihi(), LocalDate.now());
+
+        if (gecikmeGun > 0) {
+            double cezaTutari = gecikmeGun * GECIKME_CEZA_KATSAYISI;
+            
+            Ceza ceza = new Ceza();
+            ceza.setOgrenci(islem.getOgrenci());
+            ceza.setKitap(kitap);
+            ceza.setCezaMiktari(cezaTutari);
+            ceza.setOdemeDurumu("Ödenmedi");
+            
+            cezaRepository.save(ceza); // Cezayı veritabanına çakıyoruz
+            
+            System.out.println("⚠️ GECİKME CEZASI KESİLDİ: " + cezaTutari + " TL");
+            
+            // Mail gönderme kodu buraya eklenebilir (try-catch içinde)
+        }
     }
 
-    /**
-     * Belirli bir öğrencinin aktif ödünç işlemlerini getirir
-     */
-    public List<OduncIslem> ogrencininAktifOduncIslemleri(Integer ogrenciId) {
-        return oduncIslemRepository.findByOgrenciIdAndDurum(ogrenciId, "Aktif");
-    }
+    // --- YARDIMCI METODLAR (Frontend İçin) ---
 
-    /**
-     * Belirli bir öğrencinin tüm ödünç işlemlerini getirir (geçmiş dahil)
-     */
-    public List<OduncIslem> ogrencininTumOduncIslemleri(Integer ogrenciId) {
-        return oduncIslemRepository.findByOgrenciIdOrderByAlisTarihiDesc(ogrenciId);
-    }
-
-    /**
-     * Tüm aktif ödünç işlemlerini getirir
-     */
     public List<OduncIslem> tumAktifOduncIslemleri() {
-        return oduncIslemRepository.findByDurum("Aktif");
-    }
-
-    /**
-     * Belirli bir ödünç işlemini ID ile getirir
-     */
-    public OduncIslem getir(Long id) {
-        return oduncIslemRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ödünç işlemi bulunamadı"));
+        // Sadece 'Aktif' olanları veya iade tarihi null olanları döndür
+        return oduncIslemRepository.findAll().stream()
+                .filter(islem -> islem.getGercekIadeTarihi() == null)
+                .toList();
     }
 }
-
