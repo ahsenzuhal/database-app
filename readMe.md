@@ -4,7 +4,6 @@ Spring Boot backend ve Vanilla JavaScript frontend ile geliştirilmiştir.
 
 <img width="1915" height="948" alt="image" src="https://github.com/user-attachments/assets/e5303276-8323-4e2a-98a6-1440e67e7b46" />
 
-<img width="1701" height="708" alt="image" src="https://github.com/user-attachments/assets/e543ea14-db0f-4139-be28-ca3ab58ba265" />
 
 
 ## İçindekiler
