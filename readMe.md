@@ -2,6 +2,9 @@
 
 Spring Boot backend ve Vanilla JavaScript frontend ile geliştirilmiştir.
 
+<img width="1915" height="948" alt="image" src="https://github.com/user-attachments/assets/e5303276-8323-4e2a-98a6-1440e67e7b46" />
+
+
 ## İçindekiler
 
 - [Özellikler](#özellikler)
@@ -141,4 +144,30 @@ src/
 
 - Öğrenci Paneli (User UI): Standart kullanıcı (Öğrenci) giriş yaptığında sadece kendi ödünç aldığı kitapları görebileceği "Kitaplarım" sayfası henüz aktif değil.
 
+<<<<<<< HEAD
 -  E-Posta Bildirimleri: Kitap iade tarihi yaklaştığında veya geciktiğinde otomatik e-posta gönderen (JavaMailSender) mekanizma henüz entegre edilmedi.
+=======
+### Son Güncellemeler (11.12.2025)
+
+1. **Ödünç İşlem Sistemi**
+   - OduncIslem Entity eklendi
+   - Detaylı ödünç takibi
+   - Gecikme hesaplama ve ceza sistemi
+
+2. **Frontend İyileştirmeleri**
+   - Dark Academia teması
+   - Responsive tasarım
+   - Arama özellikli dropdown'lar
+   - Toast bildirimleri
+
+3. **Backend İyileştirmeleri**
+   - Global Exception Handler
+   - DTO Pattern kullanımı
+   - Service Layer mimarisi
+   - Tip güvenliği (Long ID'ler)
+
+4. **Güvenlik**
+   - JWT Authentication
+   - Rol tabanlı yetkilendirme
+   - Secure password hashing (BCrypt)
+>>>>>>> 894054f2ec386db839c72290567606e2e9c5f809
